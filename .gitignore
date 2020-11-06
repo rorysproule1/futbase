@@ -1,0 +1,25 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+frontend/.env
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# api side gitignores
+__pycache__
+.pyc
+.vscode/settings.json
+api/venv
+api/.flaskenv
