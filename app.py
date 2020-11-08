@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
 @app.route("/api/v1.0/players", methods=["GET"])
 def show_all_players():
-    # Get pagination details of query
+    # Get pagination details of the query
     page_num, page_size = 1, 10
     if request.args.get("pn"):
         page_num = int(request.args.get("pn"))
@@ -34,9 +34,11 @@ def show_all_players():
 
     # Get all players matching query from database
     data_to_return = []
-    projected_fields = get_players_fields(many=True)
     for player in (
-        players.find(filters, projected_fields).skip(page_start).limit(page_size).sort("overall", -1)
+        players.find(filters, get_players_fields(many=True))
+        .skip(page_start)
+        .limit(page_size)
+        .sort("overall", -1)
     ):
         # Append relevant data for each player
         data_to_return.append(
@@ -49,6 +51,7 @@ def show_all_players():
                 "club": player["club"],
                 "quality": player["quality"],
                 "revision": player["revision"],
+                # stats stored are dependant on if the player is a goalkeeper or outfield player
                 "stats": {
                     "diving": player["gk_diving"],
                     "handling": player["gk_handling"],
@@ -79,8 +82,7 @@ def show_all_players():
 
 def get_filters(request):
     filters = {}
-    filter_data = request.get_data()
-    if filter_data:
+    if request.get_data():
         filters_data = json.loads(request.get_data())["filters"]
         if filters_data.get("name") is not None:
             filters["player_extended_name"] = {
@@ -93,17 +95,36 @@ def get_filters(request):
             filters["club"] = {"$eq": filters_data["club"]}
         if filters_data.get("nationality") is not None:
             filters["nationality"] = {"$eq": filters_data["nationality"]}
+        if filters_data.get("quality") is not None:
+            filters["quality"] = {"$eq": filters_data["quality"]}
+        if filters_data.get("revision") is not None:
+            filters["revision"] = {
+                "$regex": filters_data["revision"],
+                "$options": "i",
+            }
         if filters_data.get("position") is not None:
             if filters_data["position"]:
                 filters["position"] = {
                     "$in": get_viable_positions(filters_data["position"])
                 }
+        if filters_data.get("stats") is not None:
+            stats = filters_data["stats"]
+            for key in stats:
+                filters[key] = {"$gte": stats[key]}
     return filters
 
 
 def get_viable_positions(position):
+
+    """
+    Players in certain positions can have their position modified, so when we search for a particular position,
+    it makes sense for us to also search for players that can also play this position with a modifier, giving the user
+    as many player options as possible to come to a decision.
+    """
+
     viable_positions = []
     if position in ["GK", "CB"]:
+        # these can't be modified
         return [position]
     elif position in ["LB", "LWB"]:
         return ["LB", "LWB"]
@@ -122,13 +143,16 @@ def get_viable_positions(position):
     elif position == "CF":
         return ["CAM", "CF", "ST"]
     elif position == "ST":
-        return [
-            "CF",
-            "ST",
-        ]
+        return ["CF", "ST"]
 
 
 def get_players_fields(many=False):
+
+    """
+    To ensure we are only returning necessary fields from the database, we return a projection
+    dependant on if the query is for all players or a specific one.
+    """
+
     if many:
         return {
             "player_name": 1,
