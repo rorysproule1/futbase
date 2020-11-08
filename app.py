@@ -177,4 +177,22 @@ def get_players_fields(many=False):
         }
 
 
+@app.route("/api/v1.0/players/<string:id>", methods=["GET"])
+def show_one_player(id):
+    if not valid_id(id):
+        return make_response(jsonify({"error": "Invalid player ID"}), 400)
+
+    player = players.find_one({"_id": ObjectId(id)})
+    if player is not None:
+        player["_id"] = str(player["_id"])
+        return make_response(jsonify(player), 200)
+    else:
+        return make_response(jsonify({"error": "No player was found with this ID"}), 404)
+
+def valid_id(id):
+    if id.isalnum() and len(id) == 24:
+        return True
+    else:
+        return False
+
 # players.update({}, {"$unset": {"added_date": 1, "intl_rep": 1, "weight": 1, "futbin_id": 1,}}, multi=True)
