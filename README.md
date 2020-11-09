@@ -1,6 +1,6 @@
-# Welcome to Talaria!
+# Welcome to FUTbase!
 
-**Talaria** is a web based tool that is used alongside [**Strava**](https://www.strava.com/) to help create, plan, execute and monitor any and all running goals you may have, from running your first ever 5km to getting ready for your next marathon!
+**Futbase** is a web based tool that works alongside FIFA Ultimate Team to allow users to find the perfect player for their team! Providing in depth querying and filtering based off any and all attributes a player can have in the game. Users can also review players and add them to their wishlist to keep track of them.
 
 # Files
 
