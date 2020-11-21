@@ -65,12 +65,12 @@ def get_all_players():
 
     return make_response(jsonify(data_to_return), 200)
 
-@player.route("/api/v1.0/players/<string:id>", methods=["GET"])
-def get_one_player(id):
-    if not valid_id(id):
+@player.route("/api/v1.0/players/<string:player_id>", methods=["GET"])
+def get_one_player(player_id):
+    if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
-    player = mongo.db.players.find_one({"_id": ObjectId(id)})
+    player = mongo.db.players.find_one({"_id": ObjectId(player_id)})
     if player is not None:
         player["_id"] = str(player["_id"])
         return make_response(jsonify(player), 200)
