@@ -74,7 +74,7 @@ def delete_user(user_id):
     if result.deleted_count == 1:
         return make_response(jsonify({}), 204)
     else:
-        return make_response(jsonify({"error": "Invalid user ID"}), 404)
+        return make_response(jsonify({"error": "No user found with this ID"}), 404)
 
 
 def valid_id(id):
