@@ -78,10 +78,7 @@ def delete_user(user_id):
 
 
 def valid_id(id):
-    if ObjectId.is_valid(id):
-        return True
-    else:
-        return False
+    return True if ObjectId.is_valid(id) else False
 
 
 def valid_post_user(user):

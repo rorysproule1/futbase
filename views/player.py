@@ -73,9 +73,23 @@ def get_one_player(player_id):
     player = mongo.db.players.find_one({"_id": ObjectId(player_id)})
     if player is not None:
         player["_id"] = str(player["_id"])
+        for review in player["reviews"]:
+            review["_id"] = str(review["_id"])
         return make_response(jsonify(player), 200)
     else:
         return make_response(jsonify({"error": "No player was found with this ID"}), 404)
+
+# ADD THIS TO POSTMAN ONCE CREATION AND EDITING PLAYERS IS IN PLACE
+@player.route("/api/v1.0/players/<string:player_id>", methods=["DELETE"])
+def delete_player(player_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+
+    result = mongo.db.players.delete_one({"_id": ObjectId(player_id)})
+    if result.deleted_count == 1:
+        return make_response(jsonify({}), 204)
+    else:
+        return make_response(jsonify({"error": "No player found with this ID"}), 404)
 
 
 def get_filters(request):
@@ -177,7 +191,4 @@ def get_players_fields(many=False):
 # players.update({}, {"$unset": {"added_date": 1, "intl_rep": 1, "weight": 1, "futbin_id": 1,}}, multi=True)
 
 def valid_id(id):
-    if ObjectId.is_valid(id):
-        return True
-    else:
-        return False
+    return True if ObjectId.is_valid(id) else False

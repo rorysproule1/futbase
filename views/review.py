@@ -2,7 +2,7 @@ from flask import Blueprint, Flask, request, jsonify, make_response
 from pymongo import MongoClient
 from bson import ObjectId
 import jwt
-import datetime
+from datetime import datetime
 from functools import wraps
 import bcrypt
 import json
@@ -13,99 +13,168 @@ import re
 review = Blueprint("review", __name__)
 
 
-@review.route("/api/v1.0/players/<string:player_id>/review", methods=["GET"])
-def get_player_reviews(player_id):
+@review.route("/api/v1.0/players/<string:player_id>/reviews", methods=["GET"])
+def get_all_reviews(player_id):
+
+    # Get pagination details of the query
+    page_num, page_size = 1, 10
+    if request.args.get("pn"):
+        page_num = int(request.args.get("pn"))
+    if request.args.get("ps"):
+        page_size = int(request.args.get("ps"))
+    page_start = page_size * (page_num - 1)
+
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
     data_to_return = []
-    user = mongo.db.users.find_one(
-        {"_id": ObjectId(player_id)}, {"review": 1, "_id": 0}
+    # might have to change this to find instead of find_one to enable paginsation limits and sorting
+    reviews = mongo.db.players.find_one({"_id": ObjectId(player_id)}, {"reviews": 1, "_id": 0})
+
+    for review in reviews["reviews"]:
+        review["_id"] = str(review["_id"])
+        data_to_return.append(review)
+    
+    # data_to_return = sorted(data_to_return, key=lambda k: k['upvotes'], reverse=True) 
+
+    return make_response(jsonify(data_to_return), 200)
+
+
+@review.route(
+    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>", methods=["GET"]
+)
+def get_one_review(player_id, review_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+    if not valid_id(review_id):
+        return make_response(jsonify({"error": "Invalid review ID format"}), 400)
+
+    reviews = mongo.db.players.find_one(
+        {"reviews._id": ObjectId(review_id)}, {"_id": 0, "reviews.$": 1}
     )
-    for player in user["review"]:
-        player["_id"] = str(player["_id"])
-        data_to_return.append(player)
-
-    return make_response(jsonify(data_to_return), 200)
-
-
-@review.route("/api/v1.0/players/<string:player_id>/add", methods=["POST"])
-def test(player_id):
-
-    data_to_return = []
-    for player in mongo.db.players.find():
-        # Append relevant data for each player
-        data_to_return.append(
-            {
-                "player_id": str(player["_id"]),
-                "name": player["player_name"],
-                "overall": player["overall"],
-                "position": player["position"],
-                "nationality": player["nationality"],
-                "club": player["club"],
-                "quality": player["quality"],
-                "revision": player["revision"],
-                # stats stored are dependant on if the player is a goalkeeper or outfield player
-                "stats": {
-                    "diving": player["gk_diving"],
-                    "handling": player["gk_handling"],
-                    "kicking": player["gk_kicking"],
-                    "reflexes": player["gk_reflexes"],
-                    "speed": player["gk_speed"],
-                    "positioning": player["gk_positoning"],
+    if reviews is None:
+        return make_response(
+            jsonify(
+                {
+                    "error": "Could not find a review with the player and review IDs provided"
                 }
-                if player["position"] == "GK"
-                else {
-                    "pace": player["pace"],
-                    "shooting": player["shooting"],
-                    "passing": player["passing"],
-                    "dribbling": player["dribbling"],
-                    "physical": player["physicality"],
-                    "defending": player["defending"],
-                },
-            }
+            ),
+            404,
         )
-    return make_response(jsonify(data_to_return), 200)
+    reviews["reviews"][0]["_id"] = str(reviews["reviews"][0]["_id"])
+
+    return make_response(jsonify(reviews["reviews"][0]), 200)
 
 
-# @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["POST"])
-# def add_player_to_wishlist(user_id):
-#     if not valid_id(user_id):
-#         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
+@review.route("/api/v1.0/players/<string:player_id>/reviews", methods=["POST"])
+def add_review(player_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
 
-#     if not valid_wishlist_data(request.form):
-#         return make_response(jsonify({"error": "Invalid wishlist data"}), 400)
+    if not request.form.get("email") or not request.form.get("comment"):
+        return make_response(jsonify({"error": "Invalid review data"}), 400)
 
-#     wishlist_player = {
-#         "_id": ObjectId(),
-#         "player_id": request.form["player_id"],
-#         "base_id": int(request.form["base_id"]),
-#     }
-#     mongo.db.users.update_one(
-#         {"_id": ObjectId(user_id)}, {"$push": {"wishlist": wishlist_player}}
-#     )
+    new_review = {
+        "_id": ObjectId(),
+        "user": request.form["email"],
+        "comment": request.form["comment"],
+        "date": datetime.now(),
+        "upvotes": 0,
+        "upvoters": [],
+        "downvoters": [],
+    }
+    mongo.db.players.update_one(
+        {"_id": ObjectId(player_id)}, {"$push": {"reviews": new_review}}
+    )
 
-#     return make_response(
-#         jsonify({"wishlist_player_id": str(wishlist_player["_id"])}), 201
-#     )
+    return make_response(jsonify({"review_id": str(new_review["_id"])}), 201)
 
 
-# @wishlist.route(
-#     "/api/v1.0/users/<string:user_id>/wishlist/<string:wishlist_id>", methods=["DELETE"]
-# )
-# def delete_player_from_wishlist(user_id, wishlist_id):
-#     if not valid_id(user_id):
-#         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
-#     if not valid_id(wishlist_id):
-#         return make_response(jsonify({"error": "Invalid wishlist ID format"}), 400)
+@review.route(
+    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>",
+    methods=["DELETE"],
+)
+def delete_review(player_id, review_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+    if not valid_id(review_id):
+        return make_response(jsonify({"error": "Invalid review ID format"}), 400)
 
-#     mongo.db.users.update_one(
-#         {"_id": ObjectId(user_id)},
-#         {"$pull": {"wishlist": {"_id": ObjectId(wishlist_id)}}},
-#     )
+    mongo.db.players.update_one(
+        {"_id": ObjectId(player_id)},
+        {"$pull": {"reviews": {"_id": ObjectId(review_id)}}},
+    )
+    return make_response(jsonify({}), 204)
 
-#     return make_response(jsonify({}), 204)
+
+@review.route(
+    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>/upvote/<string:user_id>",
+    methods=["PUT"],
+)
+def upvote_review(player_id, review_id, user_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+    if not valid_id(review_id):
+        return make_response(jsonify({"error": "Invalid review ID format"}), 400)
+    if not valid_id(user_id):
+        return make_response(jsonify({"error": "Invalid user ID format"}), 400)
+
+    # only allow the user to upvote if they haven't yet done so
+    if user_id not in get_upvoters(review_id):
+        mongo.db.players.update_one(
+            {"reviews._id": ObjectId(review_id)},
+            {
+                "$addToSet": {"reviews.$.upvoters": user_id},
+                "$inc": {"reviews.$.upvotes": 1},
+                "$pull": {"reviews.$.downvoters": user_id},
+            },
+        )
+    else:
+        return make_response(jsonify({"error": "This user has already upvoted this review"}), 404)
+
+    return make_response(jsonify({"review_id": review_id}), 200)
+
+@review.route(
+    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>/downvote/<string:user_id>",
+    methods=["PUT"],
+)
+def downvote_review(player_id, review_id, user_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+    if not valid_id(review_id):
+        return make_response(jsonify({"error": "Invalid review ID format"}), 400)
+    if not valid_id(user_id):
+        return make_response(jsonify({"error": "Invalid user ID format"}), 400)
+
+    # Only allow the user to downvote if they haven't yet done so
+    if user_id not in get_downvoters(review_id):
+        mongo.db.players.update_one(
+            {"reviews._id": ObjectId(review_id)},
+            {
+                "$pull": {"reviews.$.upvoters": user_id},
+                "$inc": {"reviews.$.upvotes": -1},
+                "$addToSet": {"reviews.$.downvoters": user_id},
+            },
+        )
+    else:
+        return make_response(jsonify({"error": "This user has already downvoted this review"}), 404)
+
+    return make_response(jsonify({"review_id": review_id}), 200)
 
 
 def valid_id(id):
     return True if ObjectId.is_valid(id) else False
+
+def get_downvoters(review_id):
+    review = mongo.db.players.find_one(
+        {"reviews._id": ObjectId(review_id)}, {"_id": 0, "reviews.$": 1}
+    )
+
+    return review["reviews"][0]["downvoters"]
+
+def get_upvoters(review_id):
+    review = mongo.db.players.find_one(
+        {"reviews._id": ObjectId(review_id)}, {"_id": 0, "reviews.$": 1}
+    )
+
+    return review["reviews"][0]["upvoters"]

@@ -12,6 +12,20 @@ import re
 
 wishlist = Blueprint("wishlist", __name__)
 
+@wishlist.route("/api/v1.0/users/<string:user_id>/wishlist/<string:player_id>", methods=["GET"])
+def is_player_on_wishlist(user_id, player_id):
+    if not valid_id(user_id):
+        return make_response(jsonify({"error": "Invalid user ID"}), 400)
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID"}), 400)
+
+    data_to_return = []
+    user = mongo.db.users.find_one(
+        {"_id": ObjectId(user_id), "wishlist.player_id": player_id}, {"wishlist": 1, "_id": 0}
+    )
+    decision = True if user else False
+
+    return make_response(jsonify(decision), 200)
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["GET"])
 def get_user_wishlist(user_id):
