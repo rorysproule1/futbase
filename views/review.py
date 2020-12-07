@@ -15,27 +15,17 @@ review = Blueprint("review", __name__)
 
 @review.route("/api/v1.0/players/<string:player_id>/reviews", methods=["GET"])
 def get_all_reviews(player_id):
-
-    # Get pagination details of the query
-    page_num, page_size = 1, 10
-    if request.args.get("pn"):
-        page_num = int(request.args.get("pn"))
-    if request.args.get("ps"):
-        page_size = int(request.args.get("ps"))
-    page_start = page_size * (page_num - 1)
-
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
     data_to_return = []
-    # might have to change this to find instead of find_one to enable paginsation limits and sorting
-    reviews = mongo.db.players.find_one({"_id": ObjectId(player_id)}, {"reviews": 1, "_id": 0})
+    reviews = mongo.db.players.find_one(
+        {"_id": ObjectId(player_id)}, {"reviews": 1, "_id": 0}
+    )
 
     for review in reviews["reviews"]:
         review["_id"] = str(review["_id"])
         data_to_return.append(review)
-    
-    # data_to_return = sorted(data_to_return, key=lambda k: k['upvotes'], reverse=True) 
 
     return make_response(jsonify(data_to_return), 200)
 
@@ -70,8 +60,7 @@ def get_one_review(player_id, review_id):
 def add_review(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID format"}), 400)
-
-    if not request.form.get("email") or not request.form.get("comment"):
+    if not valid_review(request.form):
         return make_response(jsonify({"error": "Invalid review data"}), 400)
 
     new_review = {
@@ -119,7 +108,7 @@ def upvote_review(player_id, review_id, user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
 
-    # only allow the user to upvote if they haven't yet done so
+    # Only allow the user to upvote if they haven't yet done so
     if user_id not in get_upvoters(review_id):
         mongo.db.players.update_one(
             {"reviews._id": ObjectId(review_id)},
@@ -130,9 +119,12 @@ def upvote_review(player_id, review_id, user_id):
             },
         )
     else:
-        return make_response(jsonify({"error": "This user has already upvoted this review"}), 404)
+        return make_response(
+            jsonify({"error": "This user has already upvoted this review"}), 404
+        )
 
     return make_response(jsonify({"review_id": review_id}), 200)
+
 
 @review.route(
     "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>/downvote/<string:user_id>",
@@ -157,7 +149,9 @@ def downvote_review(player_id, review_id, user_id):
             },
         )
     else:
-        return make_response(jsonify({"error": "This user has already downvoted this review"}), 404)
+        return make_response(
+            jsonify({"error": "This user has already downvoted this review"}), 404
+        )
 
     return make_response(jsonify({"review_id": review_id}), 200)
 
@@ -165,12 +159,21 @@ def downvote_review(player_id, review_id, user_id):
 def valid_id(id):
     return True if ObjectId.is_valid(id) else False
 
+
+def valid_review(review):
+    if review.get("email") and review.get("comment"):
+        if len(review["comment"]) < 1000 and mongo.db.users.find_one({"email": review["email"]}):
+            return True
+    return False
+    
+
 def get_downvoters(review_id):
     review = mongo.db.players.find_one(
         {"reviews._id": ObjectId(review_id)}, {"_id": 0, "reviews.$": 1}
     )
 
     return review["reviews"][0]["downvoters"]
+
 
 def get_upvoters(review_id):
     review = mongo.db.players.find_one(

@@ -12,6 +12,11 @@ import re
 
 user = Blueprint("user", __name__)
 
+"""
+The following endpoints provide functionality to handle interactions with the
+user logged in or attempting to log in. 
+"""
+
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["GET"])
 def get_user(user_id):
