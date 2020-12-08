@@ -155,16 +155,18 @@ def send_notification_email(player):
     on their wishlist are emailed letting them know a new card is out
     """
     # Get emails of user that have any version of this card on their wishlist
-    wishlist_emails = mongo.db.users.find({"wishlist.base_id": player["base_id"]}, {"email": 1})
-    
+    wishlist_emails = mongo.db.users.find(
+        {"wishlist.base_id": player["base_id"]}, {"email": 1}
+    )
+
     sender_email = "futbase.notifications@gmail.com"
     password = "Futbase1!"
 
     message = MIMEMultipart("alternative")
     message["Subject"] = f"{player['player_name']} has a new card!"
-    
+
     text = f"Hi there,\nA player on your wishlist has a new FIFA card!\n\nName: {player['player_name']}\nOverall: {player['overall']}\nPosition: {player['position']}\nQuality: {player['quality']}\nRevision: {player['revision']}\n\nLog in to Futbase to view their new card in full! - http://localhost:5000"
-    
+
     # Turn this into a plain MIMEText object
     part1 = MIMEText(text, "plain")
     message.attach(part1)
