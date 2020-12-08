@@ -7,5 +7,7 @@ def register_extensions(app):
     app.config["MONGO_URI"] = "mongodb://localhost:27017/futbase"
     initialize_db(app)
 
+    app.config['SECRET_KEY'] = 'mysecret'
+
     # All done!
     app.logger.info("Extensions registered")

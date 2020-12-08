@@ -1,21 +1,19 @@
 from flask import Blueprint, Flask, request, jsonify, make_response
-from pymongo import MongoClient
 from bson import ObjectId
-import jwt
-import datetime
 from functools import wraps
-import bcrypt
 import json
 from database.db import mongo
 import os
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from views.authenticate import jwt_required, admin_required
 
 player = Blueprint("player", __name__)
 
 
 @player.route("/api/v1.0/players", methods=["GET"])
+@jwt_required
 def get_all_players():
     # Get pagination details of the query
     page_num, page_size = 1, 10
@@ -72,6 +70,7 @@ def get_all_players():
 
 
 @player.route("/api/v1.0/players/<string:player_id>", methods=["GET"])
+@jwt_required
 def get_one_player(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
@@ -92,6 +91,8 @@ def get_one_player(player_id):
 
 
 @player.route("/api/v1.0/players", methods=["POST"])
+@jwt_required
+@admin_required
 def add_player():
     if valid_post_player(request.form):
         new_player = {
@@ -127,7 +128,7 @@ def add_player():
         new_player_id = mongo.db.players.insert_one(new_player)
 
         # Send email to any interested users
-        send_notification_email(new_player)
+        send_wishlist_email(new_player)
 
         return make_response(
             jsonify({"player_id": str(new_player_id.inserted_id)}), 201
@@ -136,7 +137,31 @@ def add_player():
         return make_response(jsonify({"error": "Missing or invalid player data"}), 404)
 
 
+@player.route("/api/v1.0/players/<string:player_id>", methods=["PUT"])
+@jwt_required
+@admin_required
+def edit_player(player_id):
+    if not valid_id(player_id):
+        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+
+    put_data = {}
+    for key in request.form:
+        put_data[key] = request.form[key]
+
+    result = mongo.db.players.update_one(
+        {"_id": ObjectId(player_id)},
+        {"$set": put_data},
+    )
+
+    if result.matched_count == 1:
+        return make_response(jsonify({"player_id": player_id}), 200)
+    else:
+        return make_response(jsonify({"error": "Invalid player ID"}), 404)
+
+
 @player.route("/api/v1.0/players/<string:player_id>", methods=["DELETE"])
+@jwt_required
+@admin_required
 def delete_player(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID format"}), 400)
@@ -148,7 +173,7 @@ def delete_player(player_id):
         return make_response(jsonify({"error": "No player found with this ID"}), 404)
 
 
-def send_notification_email(player):
+def send_wishlist_email(player):
 
     """
     If a new player is created that has an existing base card, anyone that has any version of that player

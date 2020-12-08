@@ -1,3 +1,4 @@
+from views.player import valid_post_player
 from flask import Blueprint, Flask, request, jsonify, make_response
 from pymongo import MongoClient
 from bson import ObjectId
@@ -8,6 +9,7 @@ import bcrypt
 import json
 from database.db import mongo
 import re
+from views.authenticate import jwt_required
 
 
 user = Blueprint("user", __name__)
@@ -19,13 +21,14 @@ user logged in or attempting to log in.
 
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["GET"])
+@jwt_required
 def get_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID"}), 400)
-
     player = mongo.db.users.find_one({"_id": ObjectId(user_id)})
     if player is not None:
         player["_id"] = str(player["_id"])
+        player["password"] = str(player["password"])
         return make_response(jsonify(player), 200)
     else:
         return make_response(jsonify({"error": "No user was found with this ID"}), 404)
@@ -34,9 +37,11 @@ def get_user(user_id):
 @user.route("/api/v1.0/users", methods=["POST"])
 def add_user():
     if valid_post_user(request.form):
+        byte_password = request.form["password"].encode()
+        encrypted_password = bcrypt.hashpw(byte_password, bcrypt.gensalt())
         new_user = {
             "email": request.form["email"],
-            "password": request.form["password"],
+            "password": encrypted_password,
             "user_type": "USER",
             "platform": request.form["platform"],
             "wishlist": [],
@@ -47,6 +52,7 @@ def add_user():
         return make_response(jsonify({"error": "Missing or invalid user data"}), 404)
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["PUT"])
+@jwt_required
 def edit_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -71,6 +77,7 @@ def edit_user(user_id):
         return make_response(jsonify({"error": "Invalid user ID"}), 404)
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["DELETE"])
+@jwt_required
 def delete_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)

@@ -1,4 +1,5 @@
 from flask import Flask
+from views.authenticate import authenticate
 from views.user import user
 from views.player import player
 from views.wishlist import wishlist
@@ -11,6 +12,7 @@ app = Flask(__name__)
 register_extensions(app)
 
 # Register blueprints for the app
+app.register_blueprint(authenticate)
 app.register_blueprint(player)
 app.register_blueprint(user)
 app.register_blueprint(wishlist)

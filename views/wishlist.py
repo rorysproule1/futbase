@@ -8,6 +8,7 @@ import bcrypt
 import json
 from database.db import mongo
 import re
+from views.authenticate import jwt_required
 
 
 wishlist = Blueprint("wishlist", __name__)
@@ -19,6 +20,7 @@ which is a list of player's that the player has 'starred.'
 
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["GET"])
+@jwt_required
 def get_user_wishlist(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID"}), 400)
@@ -35,6 +37,7 @@ def get_user_wishlist(user_id):
 
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["POST"])
+@jwt_required
 def add_player_to_wishlist(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -60,6 +63,7 @@ def add_player_to_wishlist(user_id):
 @wishlist.route(
     "/api/v1.0/users/<string:user_id>/wishlist/<string:wishlist_id>", methods=["DELETE"]
 )
+@jwt_required
 def delete_player_from_wishlist(user_id, wishlist_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -77,6 +81,7 @@ def delete_player_from_wishlist(user_id, wishlist_id):
 @wishlist.route(
     "/api/v1.0/users/<string:user_id>/wishlist/<string:player_id>", methods=["GET"]
 )
+@jwt_required
 def is_player_on_wishlist(user_id, player_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID"}), 400)
@@ -89,7 +94,6 @@ def is_player_on_wishlist(user_id, player_id):
 
 
 def check_on_wishlist(user_id, player_id):
-    data_to_return = []
     user = mongo.db.users.find_one(
         {"_id": ObjectId(user_id), "wishlist.player_id": player_id},
         {"wishlist": 1, "_id": 0},
