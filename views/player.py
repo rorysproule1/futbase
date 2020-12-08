@@ -7,6 +7,10 @@ from functools import wraps
 import bcrypt
 import json
 from database.db import mongo
+import os
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 player = Blueprint("player", __name__)
 
@@ -72,11 +76,14 @@ def get_one_player(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
-    player = mongo.db.players.find_one({"_id": ObjectId(player_id)})
+    player = mongo.db.players.find_one(
+        {"_id": ObjectId(player_id)}, get_players_fields(request.args.get("many"))
+    )
     if player is not None:
         player["_id"] = str(player["_id"])
-        for review in player["reviews"]:
-            review["_id"] = str(review["_id"])
+        if player.get("reviews"):
+            for review in player["reviews"]:
+                review["_id"] = str(review["_id"])
         return make_response(jsonify(player), 200)
     else:
         return make_response(
@@ -118,6 +125,10 @@ def add_player():
         new_player.update(get_player_stats(request.form))
 
         new_player_id = mongo.db.players.insert_one(new_player)
+
+        # Send email to any interested users
+        send_notification_email(new_player)
+
         return make_response(
             jsonify({"player_id": str(new_player_id.inserted_id)}), 201
         )
@@ -135,6 +146,37 @@ def delete_player(player_id):
         return make_response(jsonify({}), 204)
     else:
         return make_response(jsonify({"error": "No player found with this ID"}), 404)
+
+
+def send_notification_email(player):
+
+    """
+    If a new player is created that has an existing base card, anyone that has any version of that player
+    on their wishlist are emailed letting them know a new card is out
+    """
+    # Get emails of user that have any version of this card on their wishlist
+    wishlist_emails = mongo.db.users.find({"wishlist.base_id": player["base_id"]}, {"email": 1})
+    
+    sender_email = "futbase.notifications@gmail.com"
+    password = "Futbase1!"
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = f"{player['player_name']} has a new card!"
+    
+    text = f"Hi there,\nA player on your wishlist has a new FIFA card!\n\nName: {player['player_name']}\nOverall: {player['overall']}\nPosition: {player['position']}\nQuality: {player['quality']}\nRevision: {player['revision']}\n\nLog in to Futbase to view their new card in full! - http://localhost:5000"
+    
+    # Turn this into a plain MIMEText object
+    part1 = MIMEText(text, "plain")
+    message.attach(part1)
+
+    # Start server, login and send emails
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(sender_email, password)
+
+    for user in wishlist_emails:
+        receiver_email = user["email"]
+        server.sendmail(sender_email, receiver_email, message.as_string())
 
 
 def valid_post_player(player):
@@ -347,7 +389,7 @@ def get_viable_positions(position):
         return ["CF", "ST"]
 
 
-def get_players_fields(many=False):
+def get_players_fields(many):
 
     """
     To ensure we are only returning necessary fields from the database, we return a projection
@@ -375,6 +417,71 @@ def get_players_fields(many=False):
             "dribbling": 1,
             "physicality": 1,
             "defending": 1,
+        }
+    else:
+        return {
+            "player_name": 1,
+            "player_extended_name": 1,
+            "overall": 1,
+            "quality": 1,
+            "revision": 1,
+            "origin": 1,
+            "height": 1,
+            "nationality": 1,
+            "league": 1,
+            "club": 1,
+            "position": 1,
+            "base_id": 1,
+            "pref_foot": 1,
+            "att_workrate": 1,
+            "def_workrate": 1,
+            "skill_moves": 1,
+            "weak_foot": 1,
+            "pc_last": 1,
+            "ps4_last": 1,
+            "xbox_last": 1,
+            "reviews": 1,
+            "gk_diving": 1,
+            "gk_reflexes": 1,
+            "gk_handling": 1,
+            "gk_speed": 1,
+            "gk_kicking": 1,
+            "gk_positioning": 1,
+            "pace": 1,
+            "pace_sprint_speed": 1,
+            "pace_acceleration": 1,
+            "dribbling": 1,
+            "drib_agility": 1,
+            "drib_balance": 1,
+            "drib_reactions": 1,
+            "drib_ball_control": 1,
+            "drib_dribbling": 1,
+            "drib_composure": 1,
+            "shooting": 1,
+            "shoot_positioning": 1,
+            "shoot_finishing": 1,
+            "shoot_shot_power": 1,
+            "shoot_long_shots": 1,
+            "shoot_volleys": 1,
+            "shoot_penalties": 1,
+            "passing": 1,
+            "pass_vision": 1,
+            "pass_crossing": 1,
+            "pass_free_kick": 1,
+            "pass_short": 1,
+            "pass_long": 1,
+            "pass_curve": 1,
+            "defending": 1,
+            "def_interceptions": 1,
+            "def_heading": 1,
+            "def_marking": 1,
+            "def_stand_tackle": 1,
+            "def_slide_tackle": 1,
+            "physicality": 1,
+            "phys_jumping": 1,
+            "phys_stamina": 1,
+            "phys_strength": 1,
+            "phys_aggression": 1,
         }
 
 
