@@ -1,13 +1,9 @@
-from flask import Blueprint, Flask, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
-from functools import wraps
 import json
 from database.db import mongo
-import os
-import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from views.authenticate import jwt_required, admin_required
+from views.email import send_wishlist_email
 
 player = Blueprint("player", __name__)
 
@@ -27,13 +23,15 @@ def get_all_players():
     filters = get_filters(request)
 
     # Get all players matching query from database
-    data_to_return = []
-    for player in (
+    
+    player_list = (
         mongo.db.players.find(filters, get_players_fields(many=True))
         .skip(page_start)
         .limit(page_size)
         .sort("overall", -1)
-    ):
+    )
+    data_to_return = [{"player_count": player_list.count()}]
+    for player in player_list:
         # Append relevant data for each player
         data_to_return.append(
             {
@@ -171,39 +169,6 @@ def delete_player(player_id):
         return make_response(jsonify({}), 204)
     else:
         return make_response(jsonify({"error": "No player found with this ID"}), 404)
-
-
-def send_wishlist_email(player):
-
-    """
-    If a new player is created that has an existing base card, anyone that has any version of that player
-    on their wishlist are emailed letting them know a new card is out
-    """
-    # Get emails of user that have any version of this card on their wishlist
-    wishlist_emails = mongo.db.users.find(
-        {"wishlist.base_id": player["base_id"]}, {"email": 1}
-    )
-
-    sender_email = "futbase.notifications@gmail.com"
-    password = "Futbase1!"
-
-    message = MIMEMultipart("alternative")
-    message["Subject"] = f"{player['player_name']} has a new card!"
-
-    text = f"Hi there,\nA player on your wishlist has a new FIFA card!\n\nName: {player['player_name']}\nOverall: {player['overall']}\nPosition: {player['position']}\nQuality: {player['quality']}\nRevision: {player['revision']}\n\nLog in to Futbase to view their new card in full! - http://localhost:5000"
-
-    # Turn this into a plain MIMEText object
-    part1 = MIMEText(text, "plain")
-    message.attach(part1)
-
-    # Start server, login and send emails
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender_email, password)
-
-    for user in wishlist_emails:
-        receiver_email = user["email"]
-        server.sendmail(sender_email, receiver_email, message.as_string())
 
 
 def valid_post_player(player):

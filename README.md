@@ -4,7 +4,7 @@
 
 # Files
 
-The **frontend** folder contains all the code relevant to the Reactjs frontend for the app
+The **frontend** folder contains all the code relevant to the Angularjs frontend for the app
 
 Similarly, the **api** folder holds all the code to handle the python flask backend
 
@@ -24,7 +24,6 @@ Before being able to run the project, there are a few things we must set up and 
 2.  `cd api` and create a virtualenv `py -m venv venv`
 3.  Activate the venv with `venv\Scripts\activate`
 4. Install the required packages with the command `pip install -r requirements.txt`
-5.  Run the command `cp .flaskenv.local .flaskenv` to create your own env. Fill in the blank variables with your own details. To get your strava credentials you should follow this [video](https://www.youtube.com/watch?v=sgscChKfGyg&t=18s)
 
 # Running the app
 

@@ -1,14 +1,10 @@
-from flask import Blueprint, Flask, request, jsonify, make_response
-from pymongo import MongoClient
+from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
-import jwt
 from datetime import datetime
 from functools import wraps
-import bcrypt
-import json
 from database.db import mongo
-import re
 from views.authenticate import jwt_required
+from operator import itemgetter
 
 
 review = Blueprint("review", __name__)
@@ -20,12 +16,24 @@ def get_all_reviews(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
-    data_to_return = []
+    # Get pagination details of the query
+    page_num, page_size = 1, 10
+    if request.args.get("pn"):
+        page_num = int(request.args.get("pn"))
+    if request.args.get("ps"):
+        page_size = int(request.args.get("ps"))
+    page_start = page_size * (page_num - 1)
+
     reviews = mongo.db.players.find_one(
         {"_id": ObjectId(player_id)}, {"reviews": 1, "_id": 0}
     )
+    player_reviews = reviews["reviews"]
 
-    for review in reviews["reviews"]:
+    # Sort based on sort parameter (recent, popular, unpopular)
+    player_reviews = sort_reviews(player_reviews, request.args.get("sort"))
+
+    data_to_return = [{"review_count": len(player_reviews)}]
+    for review in player_reviews[page_start : page_start + page_size]:
         review["_id"] = str(review["_id"])
         data_to_return.append(review)
 
@@ -163,16 +171,38 @@ def downvote_review(player_id, review_id, user_id):
     return make_response(jsonify({"review_id": review_id}), 200)
 
 
+def sort_reviews(reviews, sort_parameter):
+    sort_type = (
+        "recent"
+        if sort_parameter == "recent"
+        else "popular"
+        if sort_parameter == "popular"
+        else "unpopular"
+        if sort_parameter == "unpopular"
+        else "recent"
+    )
+    if sort_type == "popular":
+        reviews = sorted(reviews, key=itemgetter("upvotes"), reverse=True)
+    if sort_type == "unpopular":
+        reviews = sorted(reviews, key=itemgetter("upvotes"), reverse=False)
+    if sort_type == "recent":
+        reviews = sorted(reviews, key=itemgetter("date"), reverse=True)
+    
+    return reviews
+
+
 def valid_id(id):
     return True if ObjectId.is_valid(id) else False
 
 
 def valid_review(review):
     if review.get("email") and review.get("comment"):
-        if len(review["comment"]) < 1000 and mongo.db.users.find_one({"email": review["email"]}):
+        if len(review["comment"]) < 1000 and mongo.db.users.find_one(
+            {"email": review["email"]}
+        ):
             return True
     return False
-    
+
 
 def get_downvoters(review_id):
     review = mongo.db.players.find_one(

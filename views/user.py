@@ -1,15 +1,10 @@
-from views.player import valid_post_player
-from flask import Blueprint, Flask, request, jsonify, make_response
-from pymongo import MongoClient
+from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
-import jwt
-import datetime
-from functools import wraps
 import bcrypt
-import json
 from database.db import mongo
 import re
 from views.authenticate import jwt_required
+from views.email import send_registration_email, send_deletion_email
 
 
 user = Blueprint("user", __name__)
@@ -37,16 +32,22 @@ def get_user(user_id):
 @user.route("/api/v1.0/users", methods=["POST"])
 def add_user():
     if valid_post_user(request.form):
+        # Encrypt user's password before storing
         byte_password = request.form["password"].encode()
         encrypted_password = bcrypt.hashpw(byte_password, bcrypt.gensalt())
+
         new_user = {
             "email": request.form["email"],
             "password": encrypted_password,
-            "user_type": "USER",
+            "user_type": request.form["user_type"],
             "platform": request.form["platform"],
             "wishlist": [],
         }
         new_user_id = mongo.db.users.insert_one(new_user)
+
+        # Send welcome email
+        send_registration_email(request.form["email"])
+
         return make_response(jsonify({"user_id": str(new_user_id.inserted_id)}), 201)
     else:
         return make_response(jsonify({"error": "Missing or invalid user data"}), 404)
@@ -82,8 +83,13 @@ def delete_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
 
+    # get user's email address before deleting for use later
+    email = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"email": 1})["email"]
+
     result = mongo.db.users.delete_one({"_id": ObjectId(user_id)})
     if result.deleted_count == 1:
+        # If account was deleted, send email confirming so
+        send_deletion_email(email)
         return make_response(jsonify({}), 204)
     else:
         return make_response(jsonify({"error": "No user found with this ID"}), 404)
@@ -95,14 +101,16 @@ def valid_id(id):
 
 def valid_post_user(user):
 
-    if "email" in user and "password" in user and "platform" in user:
+    if "email" in user and "password" in user and "platform" in user and "user_type" in user:
         if (
-            re.search("^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$", user["email"])
+            re.search("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"])
             and re.search(
                 # Password must contain 8-15 characters, with at least 1 number and special character
                 "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$", user["password"]
             )
             and user["platform"] in ["XBOX", "PC", "PS"]
+            and user["user_type"] in ["ADMIN", "USER"]
+            and not mongo.db.users.find_one({"email": user["email"]})
         ):
             return True
 
@@ -111,13 +119,16 @@ def valid_post_user(user):
 def valid_put_user(user):
 
     if "email" in user:
-        if not re.search("^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$", user["email"]):
+        if not re.search("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"]) or not mongo.db.users.find_one({"email": user["email"]}):
             return False
     if "password" in user:
         if not re.search("^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$", user["password"]):
             return False
     if "platform" in user:
         if user["platform"] not in ["XBOX", "PC", "PS"]:
+            return False
+    if "user_type" in user:
+        if user["user_type"] not in ["ADMIN", "USER"]:
             return False
 
     return True
