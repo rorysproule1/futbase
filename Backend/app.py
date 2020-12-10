@@ -5,8 +5,10 @@ from views.player import player
 from views.wishlist import wishlist
 from views.review import review
 from extensions import register_extensions
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Register extensions for the app
 register_extensions(app)

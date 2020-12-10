@@ -9,7 +9,7 @@ player = Blueprint("player", __name__)
 
 
 @player.route("/api/v1.0/players", methods=["GET"])
-@jwt_required
+# @jwt_required
 def get_all_players():
     # Get pagination details of the query
     page_num, page_size = 1, 10
@@ -23,7 +23,6 @@ def get_all_players():
     filters = get_filters(request)
 
     # Get all players matching query from database
-    
     player_list = (
         mongo.db.players.find(filters, get_players_fields(many=True))
         .skip(page_start)
@@ -40,6 +39,7 @@ def get_all_players():
                 "overall": player["overall"],
                 "position": player["position"],
                 "nationality": player["nationality"],
+                "league": player["league"],
                 "club": player["club"],
                 "quality": player["quality"],
                 "revision": player["revision"],
@@ -67,8 +67,73 @@ def get_all_players():
     return make_response(jsonify(data_to_return), 200)
 
 
+@player.route("/api/v1.0/test", methods=["POST"])
+# @jwt_required
+def test_get_all_players():
+    # Get pagination details of the query
+    page_num, page_size = 1, 10
+    if request.args.get("pn"):
+        page_num = int(request.args.get("pn"))
+    if request.args.get("ps"):
+        page_size = int(request.args.get("ps"))
+    page_start = page_size * (page_num - 1)
+
+    # Get all filters for the query
+    filters = get_filters(request)
+
+    # Get all players matching query from database
+    player_list = (
+        mongo.db.players.find(filters, get_players_fields(many=True))
+        .skip(page_start)
+        .limit(page_size)
+        .sort("overall", -1)
+    )
+    data_to_return = [{"player_count": player_list.count()}]
+    for player in player_list:
+        # Append relevant data for each player
+        data_to_return.append(
+            {
+                "player_id": str(player["_id"]),
+                "name": player["player_name"],
+                "overall": player["overall"],
+                "position": player["position"],
+                "nationality": player["nationality"],
+                "league": player["league"],
+                "club": player["club"],
+                "quality": player["quality"],
+                "revision": player["revision"],
+                # Stats stored are dependant on if the player is a goalkeeper or outfield player
+                "stats": {
+                    "diving": player["gk_diving"],
+                    "handling": player["gk_handling"],
+                    "kicking": player["gk_kicking"],
+                    "reflexes": player["gk_reflexes"],
+                    "speed": player["gk_speed"],
+                    "positioning": player["gk_positoning"],
+                }
+                if player["position"] == "GK"
+                else {
+                    "pace": player["pace"],
+                    "shooting": player["shooting"],
+                    "passing": player["passing"],
+                    "dribbling": player["dribbling"],
+                    "physical": player["physicality"],
+                    "defending": player["defending"],
+                },
+            }
+        )
+
+    return make_response(jsonify(data_to_return), 200)
+
+
+
+
+
+
+
+
 @player.route("/api/v1.0/players/<string:player_id>", methods=["GET"])
-@jwt_required
+# @jwt_required
 def get_one_player(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
@@ -260,7 +325,7 @@ def valid_post_player(player):
                     and player.get("def_heading")
                     and player.get("def_marking")
                     and player.get("def_stand_tackle")
-                    and player.get("def_slide_tackle")
+                    and player.get("def_slid_tackle")
                     and player.get("physicality")
                     and player.get("phys_jumping")
                     and player.get("phys_stamina")
@@ -297,7 +362,7 @@ def valid_post_player(player):
                         and 1 <= int(player["def_heading"]) <= 99
                         and 1 <= int(player["def_marking"]) <= 99
                         and 1 <= int(player["def_stand_tackle"]) <= 99
-                        and 1 <= int(player["def_slide_tackle"]) <= 99
+                        and 1 <= int(player["def_slid_tackle"]) <= 99
                         and 1 <= int(player["physicality"]) <= 99
                         and 1 <= int(player["phys_jumping"]) <= 99
                         and 1 <= int(player["phys_stamina"]) <= 99
@@ -394,6 +459,7 @@ def get_players_fields(many):
             "overall": 1,
             "position": 1,
             "nationality": 1,
+            "league": 1,
             "club": 1,
             "quality": 1,
             "revision": 1,
@@ -468,7 +534,7 @@ def get_players_fields(many):
             "def_heading": 1,
             "def_marking": 1,
             "def_stand_tackle": 1,
-            "def_slide_tackle": 1,
+            "def_slid_tackle": 1,
             "physicality": 1,
             "phys_jumping": 1,
             "phys_stamina": 1,
@@ -523,7 +589,7 @@ def get_player_stats(player):
             "def_heading": int(request.form.get("def_heading")),
             "def_marking": int(request.form.get("def_marking")),
             "def_stand_tackle": int(request.form.get("def_stand_tackle")),
-            "def_slide_tackle": int(request.form.get("def_slide_tackle")),
+            "def_slid_tackle": int(request.form.get("def_slid_tackle")),
             "physicality": int(request.form.get("physicality")),  # Physical
             "phys_jumping": int(request.form.get("phys_jumping")),
             "phys_stamina": int(request.form.get("phys_stamina")),

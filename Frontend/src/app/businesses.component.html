@@ -1,0 +1,40 @@
+
+<div class="container" style="margin-top:100px;">
+  <div class="row">
+    <div class="col-sm-12">
+      <div *ngFor="let business of webService.businesses_list | async">
+        <div
+          class="card text-white bg-primary mb-3"
+          [routerLink]="['/businesses', business._id]"
+          style="cursor: pointer"
+        >
+          <div class="card-header">
+            {{ business.name }}
+          </div>
+          <div class="card-body">
+            This business is based in
+            {{ business.town }}
+          </div>
+          <div class="card-footer">
+            {{ business.reviews.length }}
+            reviews available
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-6">
+          <button class="btn btn-primary" (click)="previousPage()">
+            Previous
+          </button>
+        </div>
+        <div class="col-sm-6 text-right">
+          <button class="btn btn-primary" (click)="nextPage()">Next</button>
+        </div>
+      </div>
+    </div>
+    <!-- col -->
+  </div>
+  <!-- row -->
+</div>
+<!-- container -->
