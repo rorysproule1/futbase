@@ -3,15 +3,15 @@ import { WebService } from './web.service';
 import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
-    selector: 'login',
-    templateUrl: './login.component.html',
-    styleUrls: ['./login.component.css']
+    selector: 'signup',
+    templateUrl: './signup.component.html',
+    styleUrls: ['./signup.component.css']
 })
 
 
-export class LogInComponent {
+export class SignUpComponent {
 
-    loginForm;
+    signupForm;
     credentials;
     submitError;
 
@@ -19,13 +19,10 @@ export class LogInComponent {
     constructor(public webService: WebService, private formBuilder: FormBuilder) { }
 
     ngOnInit() {
-        this.loginForm = this.formBuilder.group({
+        this.signupForm = this.formBuilder.group({
             username: ['', [ Validators.required, Validators.email]],
             password: ['', [Validators.required,  Validators.minLength(8), Validators.maxLength(15)]],
         });
-        if (sessionStorage.token) {
-            window.location.href = "/"
-        }
     }
 
     onSubmit() {
@@ -34,25 +31,29 @@ export class LogInComponent {
         }
         else {
             this.submitError = false
-            this.webService.attemptLogin(this.loginForm.value);
-            this.loginForm.reset();
+            this.webService.createUser(this.signupForm.value);
+            this.signupForm.reset();
         }
     }
 
     isInvalid(control) {
-        return this.loginForm.controls[control].invalid &&
-            this.loginForm.controls[control].touched;
+        return this.signupForm.controls[control].invalid &&
+            this.signupForm.controls[control].touched;
     }
 
     isUnTouched() {
-        return this.loginForm.controls.username.pristine ||
-            this.loginForm.controls.password.pristine;
+        return this.signupForm.controls.username.pristine ||
+            this.signupForm.controls.password.pristine;
     }
 
     isIncomplete() {
         return this.isInvalid('username') ||
             this.isInvalid('password') ||
             this.isUnTouched();
+    }
+
+    redirect() {
+        window.location.href = "/login"
     }
 
 }

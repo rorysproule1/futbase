@@ -40,7 +40,6 @@ def add_user():
             "email": request.form["email"],
             "password": encrypted_password,
             "user_type": request.form["user_type"],
-            "platform": request.form["platform"],
             "wishlist": [],
         }
         new_user_id = mongo.db.users.insert_one(new_user)
@@ -104,7 +103,6 @@ def valid_post_user(user):
     if (
         "email" in user
         and "password" in user
-        and "platform" in user
         and "user_type" in user
     ):
         if (
@@ -116,7 +114,6 @@ def valid_post_user(user):
                 "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$",
                 user["password"],
             )
-            and user["platform"] in ["XBOX", "PC", "PS"]
             and user["user_type"] in ["ADMIN", "USER"]
             and not mongo.db.users.find_one({"email": user["email"]})
         ):
@@ -137,9 +134,6 @@ def valid_put_user(user):
             "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$",
             user["password"],
         ):
-            return False
-    if "platform" in user:
-        if user["platform"] not in ["XBOX", "PC", "PS"]:
             return False
     if "user_type" in user:
         if user["user_type"] not in ["ADMIN", "USER"]:

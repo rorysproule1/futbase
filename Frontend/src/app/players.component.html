@@ -188,6 +188,15 @@
         <tbody *ngFor="let player of webService.players_list | async">
           <!-- Don't show player count used for pagination -->
           <tr
+            *ngIf="player.player_count == 0"
+            [routerLink]="['/players', player.player_id]"
+            style="cursor: pointer"
+          >
+            <div class="alert alert-warning" role="alert">
+              Your search returned no players
+            </div>
+          </tr>
+          <tr
             *ngIf="player.name"
             [routerLink]="['/players', player.player_id]"
             style="cursor: pointer"
@@ -212,7 +221,7 @@
         </div>
         <div class="col-sm-6 text-right">
           <button class="btn btn-primary" (click)="nextPage()">
-            Next Page - {{ page + 1 }}
+            Next Page
           </button>
         </div>
       </div>

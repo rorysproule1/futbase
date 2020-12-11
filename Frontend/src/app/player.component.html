@@ -202,10 +202,15 @@
     </div>
   </div>
 
+  
+
   <div class="col-sm-12">
     <div class="card text-white bg-dark mb-3">
       <div class="card-header"><b>Leave a review</b></div>
       <div class="card-body">
+        <div class="alert alert-danger" *ngIf="submitError" role="alert">
+          You must provide a review, that is less than 1000 words.
+        </div>
         <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label for="review">Review (1000 words)</label>
@@ -215,6 +220,7 @@
               name="review"
               class="form-control"
               formControlName="review"
+              [ngClass]="{ error: isInvalid('review') }"
             >
             </textarea>
           </div>

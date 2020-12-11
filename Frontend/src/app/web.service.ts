@@ -25,56 +25,6 @@ export class WebService {
 
     constructor(private http: HttpClient) { }
 
-    downvoteReview(review_id: string, sort: string) {
-        const headerDict = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'x-access-token': sessionStorage.token,
-        }
-        const requestOptions = {
-            headers: new HttpHeaders(headerDict),
-        };
-        return this.http.put(`http://localhost:5000/api/v1.0/reviews/${review_id}/downvote/${sessionStorage.user_id}`, {}, requestOptions).subscribe(response => {
-            this.getReviews(this.playerID, sort)
-        })
-
-    }
-
-    upvoteReview(review_id: string, sort: string) {
-        const headerDict = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'x-access-token': sessionStorage.token,
-        }
-        const requestOptions = {
-            headers: new HttpHeaders(headerDict),
-        };
-        return this.http.put(`http://localhost:5000/api/v1.0/reviews/${review_id}/upvote/${sessionStorage.user_id}`, {}, requestOptions).subscribe(response => {
-            this.getReviews(this.playerID, sort)
-        })
-
-    }
-
-    postToWishlist(base_id, player_id) {
-        const headerDict = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'x-access-token': sessionStorage.token,
-        }
-        const requestOptions = {
-            headers: new HttpHeaders(headerDict),
-        };
-
-        let postData = new FormData();
-        postData.append("base_id", base_id);
-        postData.append("player_id", player_id);
-
-        this.http.post(
-            `http://localhost:5000/api/v1.0/users/${sessionStorage.user_id}/wishlist`,
-            postData).subscribe(
-                response => {
-                    this.getWishlist();
-                    console.log(response)
-                });
-    }
-
     attemptLogin(credentials) {
         return this.http.get(
             'http://localhost:5000/api/v1.0/login?username=' + credentials.username + "&password=" + credentials.password
@@ -91,6 +41,28 @@ export class WebService {
             window.location.href = "/"
 
         });
+    }
+
+    createUser(credentials) {
+        const headerDict = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'x-access-token': sessionStorage.token,
+        }
+        const requestOptions = {
+            headers: new HttpHeaders(headerDict),
+        };
+
+        let postData = new FormData();
+        postData.append("email", credentials.username);
+        postData.append("password", credentials.password);
+        postData.append("user_type", "USER"); // only user accounts can be created on the sign up page
+
+        this.http.post(
+            'http://localhost:5000/api/v1.0/users',
+            postData).subscribe(
+                response => {
+                    console.log(response)
+                });
     }
 
     logOut() {
@@ -150,7 +122,6 @@ export class WebService {
             this.players_private_list = response;
             this.playersSubject.next(
                 this.players_private_list);
-            console.log(response)
             sessionStorage.setItem("player_count", response[0]["player_count"])
         });
     }
@@ -172,7 +143,6 @@ export class WebService {
                 this.playerSubject.next(
                     this.player_private_list);
                 this.playerID = id;
-                console.log(response)
             });
     }
 
@@ -191,10 +161,30 @@ export class WebService {
                     this.wishlist_private_list = response;
                     this.wishlistSubject.next(
                         this.wishlist_private_list);
-                    console.log(this.wishlist_private_list)
                 }
 
             )
+    }
+
+    postToWishlist(base_id, player_id) {
+        const headerDict = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'x-access-token': sessionStorage.token,
+        }
+        const requestOptions = {
+            headers: new HttpHeaders(headerDict),
+        };
+
+        let postData = new FormData();
+        postData.append("base_id", base_id);
+        postData.append("player_id", player_id);
+
+        this.http.post(
+            `http://localhost:5000/api/v1.0/users/${sessionStorage.user_id}/wishlist`,
+            postData).subscribe(
+                response => {
+                    this.getWishlist();
+                });
     }
 
     removeFromWishlist(playerID: string) {
@@ -227,7 +217,6 @@ export class WebService {
                     this.reviews_private_list = response;
                     this.reviewsSubject.next(
                         this.reviews_private_list);
-                    console.log(response)
                 }
             )
     }
@@ -244,7 +233,6 @@ export class WebService {
         let postData = new FormData();
         postData.append("email", sessionStorage.email);
         postData.append("comment", review.review);
-        console.log(sessionStorage.email + review.review)
 
         this.http.post(
             'http://localhost:5000/api/v1.0/players/' +
@@ -254,5 +242,33 @@ export class WebService {
                     this.getReviews(this.playerID, "recent");
                     console.log(response)
                 });
+    }
+
+    upvoteReview(review_id: string, sort: string) {
+        const headerDict = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'x-access-token': sessionStorage.token,
+        }
+        const requestOptions = {
+            headers: new HttpHeaders(headerDict),
+        };
+        return this.http.put(`http://localhost:5000/api/v1.0/reviews/${review_id}/upvote/${sessionStorage.user_id}`, {}, requestOptions).subscribe(response => {
+            this.getReviews(this.playerID, sort)
+        })
+
+    }
+
+    downvoteReview(review_id: string, sort: string) {
+        const headerDict = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'x-access-token': sessionStorage.token,
+        }
+        const requestOptions = {
+            headers: new HttpHeaders(headerDict),
+        };
+        return this.http.put(`http://localhost:5000/api/v1.0/reviews/${review_id}/downvote/${sessionStorage.user_id}`, {}, requestOptions).subscribe(response => {
+            this.getReviews(this.playerID, sort)
+        })
+
     }
 }

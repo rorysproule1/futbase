@@ -18,7 +18,7 @@ def get_all_reviews(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
 
     # Get pagination details of the query
-    page_num, page_size = 1, 10
+    page_num, page_size = 1, 5
     if request.args.get("pn"):
         page_num = int(request.args.get("pn"))
     if request.args.get("ps"):

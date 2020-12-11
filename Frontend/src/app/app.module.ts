@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { PlayerComponent } from './player.component';
 import { LogInComponent } from './login.component';
 import { WishlistComponent } from './wishlist.component';
+import { SignUpComponent } from './signup.component';
 
 
 var routes = [{
@@ -35,11 +36,15 @@ var routes = [{
   path: 'admin-tools',
   component: PlayersComponent
 },
+{
+  path: 'sign-up',
+  component: SignUpComponent
+},
 ];
 
 @NgModule({
   declarations: [
-    AppComponent, HomeComponent, NavComponent, PlayersComponent, PlayerComponent, LogInComponent, WishlistComponent
+    AppComponent, HomeComponent, NavComponent, PlayersComponent, PlayerComponent, LogInComponent, WishlistComponent, SignUpComponent
   ],
   imports: [
     BrowserModule,

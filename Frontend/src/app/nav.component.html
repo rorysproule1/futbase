@@ -18,5 +18,8 @@
     <button *ngIf="loggedIn" class="btn btn-outline-light" (click)="logout()">
       Log Out
     </button>
+    <button *ngIf="!loggedIn" class="btn btn-outline-light" routerLink="/sign-up">
+      Sign Up
+    </button>
   </div>
 </div>
