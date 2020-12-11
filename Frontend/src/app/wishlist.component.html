@@ -1,39 +1,49 @@
 <div class="container" style="margin-top: 100px">
-    <div class="row">
-      <div class="col-sm-12">
-        <table class="table">
-          <thead>
-            <tr>
-              <th scope="col">Overall</th>
-              <th scope="col">Name</th>
-              <th scope="col">Position</th>
-              <th scope="col">Revision</th>
-              <th scope="col">Overall</th>
-              <th scope="col">Name</th>
-              <th scope="col">Position</th>
-              <th scope="col">Revision</th>
-            </tr>
-          </thead>
-          <tbody *ngFor="let player of webService.wishlist_list | async">
-            <tr
-              *ngIf="player.name"
-              [routerLink]="['/players', player.player_id]"
-              style="cursor: pointer"
-            >
-              <td>{{ player.overall }}</td>
-              <td>{{ player.name }}</td>
-              <td>{{ player.position }}</td>
-              <td>{{ player.nationality }}</td>
-              <td>{{ player.league }}</td>
-              <td>{{ player.club }}</td>
-              <td>{{ player.quality }}</td>
-              <td>{{ player.revision }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- col -->
+  <div class="row">
+    <div class="col-sm-12">
+      <h4 style="margin-bottom: 10px">Your Wishlist</h4>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Overall</th>
+            <th scope="col">Name</th>
+            <th scope="col">Position</th>
+            <th scope="col">Revision</th>
+            <th scope="col">Overall</th>
+            <th scope="col">Name</th>
+            <th scope="col">Position</th>
+            <th scope="col">Revision</th>
+            <th scope="col">Remove</th>
+          </tr>
+        </thead>
+        <tbody *ngFor="let player of webService.wishlist_list | async">
+          <tr
+            *ngIf="player.name"
+            [routerLink]="['/players', player.player_id]"
+            style="cursor: pointer"
+          >
+            <td>{{ player.overall }}</td>
+            <td>{{ player.name }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.nationality }}</td>
+            <td>{{ player.league }}</td>
+            <td>{{ player.club }}</td>
+            <td>{{ player.quality }}</td>
+            <td>{{ player.revison }}</td>
+            <td>
+              <button
+                class="btn btn-outline-danger"
+                (click)="onRemove(player._id)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <!-- row -->
+    <!-- col -->
   </div>
-  <!-- container -->
+  <!-- row -->
+</div>
+<!-- container -->

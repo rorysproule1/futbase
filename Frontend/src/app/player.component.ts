@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { WebService } from './web.service';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, Validators } from '@angular/forms';
-import { AuthService } from './auth-service';
 
 @Component({
     selector: 'player',
@@ -13,17 +12,21 @@ import { AuthService } from './auth-service';
 export class PlayerComponent {
 
     reviewForm;
+    sort = "recent"
 
     constructor(public webService: WebService,
-        private route: ActivatedRoute, private formBuilder: FormBuilder, public authService: AuthService) {}
+        private route: ActivatedRoute, private formBuilder: FormBuilder) { }
 
     ngOnInit() {
+        // redirect to login if they arent authorised
+        if (!sessionStorage.user_id) {
+            window.location.href = "login"
+        }
         this.reviewForm = this.formBuilder.group({
-            review: ['', Validators.required],
-            stars: 5
+            review: [''],
         });
         this.webService.getPlayer(this.route.snapshot.params.id);
-        this.webService.getReviews(this.route.snapshot.params.id);
+        this.webService.getReviews(this.route.snapshot.params.id, this.sort);
     }
 
     onSubmit() {
@@ -31,10 +34,27 @@ export class PlayerComponent {
         this.reviewForm.reset();
     }
 
-    isInvalid(control) {
-        return this.reviewForm.controls[control].invalid &&
-            this.reviewForm.controls[control].touched;
+    addToWishlist(base_id, player_id) {
+        this.webService.postToWishlist(base_id, player_id)
     }
+
+    downvote(review_id) {
+        this.webService.downvoteReview(review_id, this.sort)
+    }
+
+    upvote(review_id) {
+        this.webService.upvoteReview(review_id, this.sort)
+    }
+
+    sortReviews(sort_name) {
+        this.sort = sort_name
+        this.webService.getReviews(this.route.snapshot.params.id, this.sort)
+    }
+
+    // isInvalid(control) {
+    //     return this.reviewForm.controls[control].invalid &&
+    //         this.reviewForm.controls[control].touched;
+    // }
 
     // isUnTouched() {
     //     return this.reviewForm.controls.name.pristine ||

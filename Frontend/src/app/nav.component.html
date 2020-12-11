@@ -1,30 +1,21 @@
 <div class="navbar navbar-expand-sm bg-primary navbar-dark fixed-top">
-  <span class="navbar-brand" routerLink="/" style="cursor: pointer">Futbase</span>
-  <ul class="navbar-nav">
+  <span class="navbar-brand" routerLink="/" style="cursor: pointer"
+    >Futbase</span
+  >
+  <ul class="navbar-nav" *ngIf="loggedIn">
     <li class="nav-item">
       <a class="nav-link" routerLink="/wishlist">Wishlist</a>
     </li>
     <li class="nav-item">
       <a class="nav-link" routerLink="/businesses">My Account</a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" *ngIf="isAdmin">
       <a class="nav-link" routerLink="/businesses">Admin Tools</a>
     </li>
   </ul>
 
   <div class="form-inline ml-auto">
-    <button
-      *ngIf="!authService.loggedIn"
-      class="btn btn-outline-light"
-      (click)="authService.login()"
-    >
-      Log In
-    </button>
-    <button
-      *ngIf="authService.loggedIn"
-      class="btn btn-outline-light"
-      (click)="authService.logout()"
-    >
+    <button *ngIf="loggedIn" class="btn btn-outline-light" (click)="logout()">
       Log Out
     </button>
   </div>

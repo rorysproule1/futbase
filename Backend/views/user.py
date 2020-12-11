@@ -52,6 +52,7 @@ def add_user():
     else:
         return make_response(jsonify({"error": "Missing or invalid user data"}), 404)
 
+
 @user.route("/api/v1.0/users/<string:user_id>", methods=["PUT"])
 @jwt_required
 def edit_user(user_id):
@@ -65,9 +66,7 @@ def edit_user(user_id):
     if valid_put_user(request.form):
         result = mongo.db.users.update_one(
             {"_id": ObjectId(user_id)},
-            {
-                "$set": put_data
-            },
+            {"$set": put_data},
         )
     else:
         return make_response(jsonify({"error": "Missing or invalid user data"}), 404)
@@ -76,6 +75,7 @@ def edit_user(user_id):
         return make_response(jsonify({"user_id": user_id}), 200)
     else:
         return make_response(jsonify({"error": "Invalid user ID"}), 404)
+
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["DELETE"])
 @jwt_required
@@ -101,12 +101,20 @@ def valid_id(id):
 
 def valid_post_user(user):
 
-    if "email" in user and "password" in user and "platform" in user and "user_type" in user:
+    if (
+        "email" in user
+        and "password" in user
+        and "platform" in user
+        and "user_type" in user
+    ):
         if (
-            re.search("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"])
+            re.search(
+                "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"]
+            )
             and re.search(
                 # Password must contain 8-15 characters, with at least 1 number and special character
-                "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$", user["password"]
+                "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$",
+                user["password"],
             )
             and user["platform"] in ["XBOX", "PC", "PS"]
             and user["user_type"] in ["ADMIN", "USER"]
@@ -116,13 +124,19 @@ def valid_post_user(user):
 
     return False
 
+
 def valid_put_user(user):
 
     if "email" in user:
-        if not re.search("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"]) or not mongo.db.users.find_one({"email": user["email"]}):
+        if not re.search(
+            "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"]
+        ) or not mongo.db.users.find_one({"email": user["email"]}):
             return False
     if "password" in user:
-        if not re.search("^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$", user["password"]):
+        if not re.search(
+            "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$",
+            user["password"],
+        ):
             return False
     if "platform" in user:
         if user["platform"] not in ["XBOX", "PC", "PS"]:

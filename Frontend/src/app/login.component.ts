@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { WebService } from './web.service';
+import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
     selector: 'login',
@@ -9,29 +10,43 @@ import { WebService } from './web.service';
 
 
 export class LogInComponent {
-    constructor(public webService: WebService) { }
 
-    // ngOnInit() {
-    //     if (sessionStorage.page) {
-    //         this.page = sessionStorage.page;
-    //     }
-    //     this.webService.getPlayers(this.page);
-    // }
-
-    // nextPage() {
-    //     this.page = Number(this.page) + 1;
-    //     sessionStorage.page = Number(this.page);
-    //     this.webService.getPlayers(this.page);
-    // }
-    // previousPage() {
-    //     if (this.page > 1) {
-    //         this.page = Number(this.page) - 1;
-    //         sessionStorage.page = Number(this.page);
-    //         this.webService.getPlayers(this.page);
-    //     }
-    // }
+    loginForm;
+    credentials;
 
 
-    // page = 1;
+    constructor(public webService: WebService, private formBuilder: FormBuilder) { }
+
+    ngOnInit() {
+        this.loginForm = this.formBuilder.group({
+            username: ['', Validators.required],
+            password: ['', Validators.required],
+        });
+        if (sessionStorage.token) {
+            window.location.href = "/"
+        }
+    }
+
+    onSubmit() {
+        this.webService.attemptLogin(this.loginForm.value);
+        this.loginForm.reset();
+
+    }
+
+    isInvalid(control) {
+        return this.loginForm.controls[control].invalid &&
+            this.loginForm.controls[control].touched;
+    }
+
+    isUnTouched() {
+        return this.loginForm.controls.username.pristine ||
+            this.loginForm.controls.password.pristine;
+    }
+
+    isIncomplete() {
+        return this.isInvalid('username') ||
+            this.isInvalid('password') ||
+            this.isUnTouched();
+    }
 
 }

@@ -5,6 +5,7 @@ import datetime
 from functools import wraps
 import bcrypt
 from database.db import mongo
+import re
 
 authenticate = Blueprint("authenticate", __name__)
 
@@ -54,30 +55,41 @@ def admin_required(func):
 
 @authenticate.route("/api/v1.0/login", methods=["GET"])
 def login():
-    auth = request.authorization
-    if auth:
-        user = mongo.db.users.find_one({"email": auth.username})
+    email = request.args.get("username")
+    password = request.args.get("password")
+
+    if valid_login_credentials(email, password):
+        user = mongo.db.users.find_one({"email": email})
         if user is not None:
-            if bcrypt.checkpw(bytes(auth.password, "UTF-8"), user["password"]):
+            if bcrypt.checkpw(bytes(password, "UTF-8"), user["password"]):
                 token = jwt.encode(
                     {
-                        "email": auth.username,
+                        "email": email,
                         "admin": True if user["user_type"] == "ADMIN" else False,
                         "exp": datetime.datetime.utcnow()
-                        + datetime.timedelta(minutes=30),
+                        + datetime.timedelta(minutes=90),
                     },
                     secret_key,
                 )
-                return make_response(jsonify({"token": token.decode("UTF-8")}), 200)
+                return make_response(
+                    jsonify(
+                        {
+                            "token": token.decode("UTF-8"),
+                            "email": email,
+                            "admin": True if user["user_type"] == "ADMIN" else False,
+                            "user_id": str(user["_id"]),
+                        }
+                    ),
+                    200,
+                )
             else:
-                return make_response(jsonify({"message": "Bad password"}), 401)
+                return make_response(jsonify({"message": "Bad password"}), 400)
         else:
-            return make_response(jsonify({"message": "Bad username"}), 401)
+            return make_response(jsonify({"message": "Bad username"}), 400)
 
     return make_response(
-        jsonify({"message": "Authentication required"}),
-        401,
-        {"WWW-Authenticate": 'Basic realm = "Login required"'},
+        jsonify({"message": "Username and password required"}),
+        400,
     )
 
 
@@ -92,3 +104,18 @@ def logout():
     else:
         mongo.db.blacklist.insert_one({"token": token})
         return make_response(jsonify({"message": "Logout successful"}), 200)
+
+
+def valid_login_credentials(email, password):
+    if not email or not password:
+        return False
+    if not re.search(
+        "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", email
+    ) or not mongo.db.users.find_one({"email": email}):
+        return False
+    if not re.search(
+        "^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$", password
+    ):
+        return False
+
+    return True

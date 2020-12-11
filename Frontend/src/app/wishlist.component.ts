@@ -16,7 +16,15 @@ export class WishlistComponent {
         private route: ActivatedRoute) { }
 
     ngOnInit() {
-        this.webService.getWishlist(this.route.snapshot.params.id);
+        // redirect to login if they arent authorised
+        if (!sessionStorage.user_id) {
+            window.location.href = "login"
+        }
+        this.webService.getWishlist();
+    }
+
+    onRemove(playerID) {
+        this.webService.removeFromWishlist(playerID);
     }
 
 }

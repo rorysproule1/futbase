@@ -20,7 +20,7 @@ which is a list of player's that the player has 'starred.'
 
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["GET"])
-# @jwt_required
+@jwt_required
 def get_user_wishlist(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID"}), 400)
@@ -43,14 +43,13 @@ def get_user_wishlist(user_id):
         player["club"] = player_data["club"]
         player["nationality"] = player_data["nationality"]
 
-
         data_to_return.append(player)
 
     return make_response(jsonify(data_to_return), 200)
 
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["POST"])
-# @jwt_required
+@jwt_required
 def add_player_to_wishlist(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -127,9 +126,9 @@ def valid_wishlist_data(post_data):
         # ensure the player looking to be added exists and they have the provided base_id
         wishlist_player = mongo.db.players.find_one({"_id": ObjectId(player_id)})
 
-        if wishlist_player is not None and base_id == wishlist_player.get(
-            "resource_id"
-        ):
+        print(wishlist_player)
+
+        if wishlist_player is not None and base_id == wishlist_player.get("base_id"):
             return True
 
     return False

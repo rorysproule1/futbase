@@ -9,8 +9,9 @@ player = Blueprint("player", __name__)
 
 
 @player.route("/api/v1.0/players", methods=["GET"])
-# @jwt_required
+@jwt_required
 def get_all_players():
+
     # Get pagination details of the query
     page_num, page_size = 1, 10
     if request.args.get("pn"):
@@ -65,75 +66,10 @@ def get_all_players():
         )
 
     return make_response(jsonify(data_to_return), 200)
-
-
-@player.route("/api/v1.0/test", methods=["POST"])
-# @jwt_required
-def test_get_all_players():
-    # Get pagination details of the query
-    page_num, page_size = 1, 10
-    if request.args.get("pn"):
-        page_num = int(request.args.get("pn"))
-    if request.args.get("ps"):
-        page_size = int(request.args.get("ps"))
-    page_start = page_size * (page_num - 1)
-
-    # Get all filters for the query
-    filters = get_filters(request)
-
-    # Get all players matching query from database
-    player_list = (
-        mongo.db.players.find(filters, get_players_fields(many=True))
-        .skip(page_start)
-        .limit(page_size)
-        .sort("overall", -1)
-    )
-    data_to_return = [{"player_count": player_list.count()}]
-    for player in player_list:
-        # Append relevant data for each player
-        data_to_return.append(
-            {
-                "player_id": str(player["_id"]),
-                "name": player["player_name"],
-                "overall": player["overall"],
-                "position": player["position"],
-                "nationality": player["nationality"],
-                "league": player["league"],
-                "club": player["club"],
-                "quality": player["quality"],
-                "revision": player["revision"],
-                # Stats stored are dependant on if the player is a goalkeeper or outfield player
-                "stats": {
-                    "diving": player["gk_diving"],
-                    "handling": player["gk_handling"],
-                    "kicking": player["gk_kicking"],
-                    "reflexes": player["gk_reflexes"],
-                    "speed": player["gk_speed"],
-                    "positioning": player["gk_positoning"],
-                }
-                if player["position"] == "GK"
-                else {
-                    "pace": player["pace"],
-                    "shooting": player["shooting"],
-                    "passing": player["passing"],
-                    "dribbling": player["dribbling"],
-                    "physical": player["physicality"],
-                    "defending": player["defending"],
-                },
-            }
-        )
-
-    return make_response(jsonify(data_to_return), 200)
-
-
-
-
-
-
 
 
 @player.route("/api/v1.0/players/<string:player_id>", methods=["GET"])
-# @jwt_required
+@jwt_required
 def get_one_player(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
@@ -177,10 +113,6 @@ def add_player():
             "def_workrate": request.form.get("def_workrate"),
             "skill_moves": int(request.form.get("skill_moves")),
             "weak_foot": int(request.form.get("weak_foot")),
-            # Prices
-            "pc_last": request.form.get("pc_last"),
-            "ps4_last": request.form.get("ps4_last"),
-            "xbox_last": request.form.get("xbox_last"),
             # Reviews
             "reviews": [],
         }
@@ -382,35 +314,31 @@ def valid_post_player(player):
 
 def get_filters(request):
     filters = {}
-    if request.get_data():
-        filters_data = json.loads(request.get_data())["filters"]
-        if filters_data.get("name") is not None:
-            filters["player_extended_name"] = {
-                "$regex": filters_data["name"],
-                "$options": "i",
+    if request.args.get("name") is not None:
+        filters["player_extended_name"] = {
+            "$regex": request.args.get("name"),
+            "$options": "i",
+        }
+    if request.args.get("league") is not None:
+        filters["league"] = {"$eq": request.args.get("league")}
+    if request.args.get("overall") is not None:
+        filters["overall"] = {"$eq": int(request.args.get("overall"))}
+    if request.args.get("club") is not None:
+        filters["club"] = {"$eq": request.args.get("club")}
+    if request.args.get("nationality") is not None:
+        filters["nationality"] = {"$eq": request.args.get("nationality")}
+    if request.args.get("quality") is not None:
+        filters["quality"] = {"$eq": request.args.get("quality")}
+    if request.args.get("revision") is not None:
+        filters["revision"] = {
+            "$regex": request.args.get("revision"),
+            "$options": "i",
+        }
+    if request.args.get("position") is not None:
+        if request.args.get("position"):
+            filters["position"] = {
+                "$in": get_viable_positions(request.args.get("position"))
             }
-        if filters_data.get("league") is not None:
-            filters["league"] = {"$eq": filters_data["league"]}
-        if filters_data.get("club") is not None:
-            filters["club"] = {"$eq": filters_data["club"]}
-        if filters_data.get("nationality") is not None:
-            filters["nationality"] = {"$eq": filters_data["nationality"]}
-        if filters_data.get("quality") is not None:
-            filters["quality"] = {"$eq": filters_data["quality"]}
-        if filters_data.get("revision") is not None:
-            filters["revision"] = {
-                "$regex": filters_data["revision"],
-                "$options": "i",
-            }
-        if filters_data.get("position") is not None:
-            if filters_data["position"]:
-                filters["position"] = {
-                    "$in": get_viable_positions(filters_data["position"])
-                }
-        if filters_data.get("stats") is not None:
-            stats = filters_data["stats"]
-            for key in stats:
-                filters[key] = {"$gte": stats[key]}
     return filters
 
 
@@ -495,16 +423,13 @@ def get_players_fields(many):
             "def_workrate": 1,
             "skill_moves": 1,
             "weak_foot": 1,
-            "pc_last": 1,
-            "ps4_last": 1,
-            "xbox_last": 1,
             "reviews": 1,
             "gk_diving": 1,
             "gk_reflexes": 1,
             "gk_handling": 1,
             "gk_speed": 1,
             "gk_kicking": 1,
-            "gk_positioning": 1,
+            "gk_positoning": 1,
             "pace": 1,
             "pace_sprint_speed": 1,
             "pace_acceleration": 1,

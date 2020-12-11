@@ -5,13 +5,14 @@ from functools import wraps
 from database.db import mongo
 from views.authenticate import jwt_required
 from operator import itemgetter
+import re
 
 
 review = Blueprint("review", __name__)
 
 
 @review.route("/api/v1.0/players/<string:player_id>/reviews", methods=["GET"])
-# @jwt_required
+@jwt_required
 def get_all_reviews(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID"}), 400)
@@ -68,12 +69,13 @@ def get_one_review(player_id, review_id):
 
 
 @review.route("/api/v1.0/players/<string:player_id>/reviews", methods=["POST"])
-# @jwt_required
 def add_review(player_id):
     if not valid_id(player_id):
         return make_response(jsonify({"error": "Invalid player ID format"}), 400)
     if not valid_review(request.form):
         return make_response(jsonify({"error": "Invalid review data"}), 400)
+
+    print(request.form)
 
     new_review = {
         "_id": ObjectId(),
@@ -110,13 +112,11 @@ def delete_review(player_id, review_id):
 
 
 @review.route(
-    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>/upvote/<string:user_id>",
+    "/api/v1.0/reviews/<string:review_id>/upvote/<string:user_id>",
     methods=["PUT"],
 )
 @jwt_required
-def upvote_review(player_id, review_id, user_id):
-    if not valid_id(player_id):
-        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+def upvote_review(review_id, user_id):
     if not valid_id(review_id):
         return make_response(jsonify({"error": "Invalid review ID format"}), 400)
     if not valid_id(user_id):
@@ -141,13 +141,11 @@ def upvote_review(player_id, review_id, user_id):
 
 
 @review.route(
-    "/api/v1.0/players/<string:player_id>/reviews/<string:review_id>/downvote/<string:user_id>",
+    "/api/v1.0/reviews/<string:review_id>/downvote/<string:user_id>",
     methods=["PUT"],
 )
 @jwt_required
-def downvote_review(player_id, review_id, user_id):
-    if not valid_id(player_id):
-        return make_response(jsonify({"error": "Invalid player ID format"}), 400)
+def downvote_review(review_id, user_id):
     if not valid_id(review_id):
         return make_response(jsonify({"error": "Invalid review ID format"}), 400)
     if not valid_id(user_id):
