@@ -32,10 +32,18 @@ var routes = [{
   path: 'wishlist',
   component: WishlistComponent
 },
+// both my account and admin tools have not been implemented on the frontend due to time constraints,
+// however they are both functional through the backend api. You can see the level of access in place 
+// on the frontend as only admin users can see the admin tools option
+{
+  path: 'my-account',
+  component: PlayersComponent
+},
 {
   path: 'admin-tools',
   component: PlayersComponent
 },
+
 {
   path: 'sign-up',
   component: SignUpComponent

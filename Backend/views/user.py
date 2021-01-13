@@ -53,7 +53,6 @@ def add_user():
 
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["PUT"])
-@jwt_required
 def edit_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -77,7 +76,6 @@ def edit_user(user_id):
 
 
 @user.route("/api/v1.0/users/<string:user_id>", methods=["DELETE"])
-@jwt_required
 def delete_user(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)
@@ -100,11 +98,7 @@ def valid_id(id):
 
 def valid_post_user(user):
 
-    if (
-        "email" in user
-        and "password" in user
-        and "user_type" in user
-    ):
+    if "email" in user and "password" in user and "user_type" in user:
         if (
             re.search(
                 "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", user["email"]

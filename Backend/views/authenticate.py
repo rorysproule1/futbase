@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify, make_response
-from bson import ObjectId
 import jwt
 import datetime
 from functools import wraps

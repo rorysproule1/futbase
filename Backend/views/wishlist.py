@@ -1,13 +1,6 @@
-from flask import Blueprint, Flask, request, jsonify, make_response
-from pymongo import MongoClient
+from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
-import jwt
-import datetime
-from functools import wraps
-import bcrypt
-import json
 from database.db import mongo
-import re
 from views.authenticate import jwt_required
 
 
@@ -49,7 +42,6 @@ def get_user_wishlist(user_id):
 
 
 @wishlist.route("/api/v1.0/users/<string:user_id>/wishlist", methods=["POST"])
-@jwt_required
 def add_player_to_wishlist(user_id):
     if not valid_id(user_id):
         return make_response(jsonify({"error": "Invalid user ID format"}), 400)

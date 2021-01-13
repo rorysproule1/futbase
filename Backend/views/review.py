@@ -1,11 +1,9 @@
 from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
 from datetime import datetime
-from functools import wraps
 from database.db import mongo
 from views.authenticate import jwt_required
 from operator import itemgetter
-import re
 
 
 review = Blueprint("review", __name__)
@@ -185,7 +183,7 @@ def sort_reviews(reviews, sort_parameter):
         reviews = sorted(reviews, key=itemgetter("upvotes"), reverse=False)
     if sort_type == "recent":
         reviews = sorted(reviews, key=itemgetter("date"), reverse=True)
-    
+
     return reviews
 
 

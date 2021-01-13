@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify, make_response
 from bson import ObjectId
-import json
 from database.db import mongo
 from views.authenticate import jwt_required, admin_required
 from views.email import send_wishlist_email

@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 sender_email = "futbase.notifications@gmail.com"
 password = "Futbase1!"
 
+
 def send_wishlist_email(player):
 
     """
@@ -36,12 +37,13 @@ def send_wishlist_email(player):
         receiver_email = user["email"]
         server.sendmail(sender_email, receiver_email, message.as_string())
 
+
 def send_registration_email(email):
 
     """
     If a new user is created, the email they provide is sent a registration success email
     """
-    
+
     message = MIMEMultipart("alternative")
     message["Subject"] = f"Welcome to Futbase!"
 
@@ -64,7 +66,7 @@ def send_deletion_email(email):
     """
     If user is deleted, the email they provide is sent a deletion success email
     """
-    
+
     message = MIMEMultipart("alternative")
     message["Subject"] = f"So long for now!"
 
@@ -80,8 +82,3 @@ def send_deletion_email(email):
     server.login(sender_email, password)
     receiver_email = email
     server.sendmail(sender_email, receiver_email, message.as_string())
-
-
-
-    
-    

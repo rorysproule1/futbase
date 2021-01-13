@@ -14,8 +14,10 @@ export class NavComponent {
     isAdmin
 
     ngOnInit() {
+
         if (sessionStorage.user_id) {
             this.loggedIn = true
+            // if the user is admin show the admin tools tab
             if (sessionStorage.admin === "true") {
                 this.isAdmin = true
             }
