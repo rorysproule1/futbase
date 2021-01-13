@@ -1,10 +1,10 @@
-# Welcome to Talaria!
+# Welcome to FUTbase!
 
-**Talaria** is a web based tool that is used alongside [**Strava**](https://www.strava.com/) to help create, plan, execute and monitor any and all running goals you may have, from running your first ever 5km to getting ready for your next marathon!
+**Futbase** is a web based tool that works alongside FIFA Ultimate Team to allow users to find the perfect player for their team! Providing in depth querying and filtering based off any and all attributes a player can have in the game. Users can also review players and add them to their wishlist to keep track of them.
 
 # Files
 
-The **frontend** folder contains all the code relevant to the Reactjs frontend for the app
+The **frontend** folder contains all the code relevant to the Angularjs frontend for the app
 
 Similarly, the **api** folder holds all the code to handle the python flask backend
 
@@ -24,7 +24,6 @@ Before being able to run the project, there are a few things we must set up and 
 2.  `cd api` and create a virtualenv `py -m venv venv`
 3.  Activate the venv with `venv\Scripts\activate`
 4. Install the required packages with the command `pip install -r requirements.txt`
-5.  Run the command `cp .flaskenv.local .flaskenv` to create your own env. Fill in the blank variables with your own details. To get your strava credentials you should follow this [video](https://www.youtube.com/watch?v=sgscChKfGyg&t=18s)
 
 # Running the app
 

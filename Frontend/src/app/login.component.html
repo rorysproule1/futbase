@@ -1,0 +1,37 @@
+<div class="container" style="margin-top: 100px">
+  <div class="row">
+    <div class="col-sm-7" style="margin: auto">
+      <h2 style="text-align: center">Log In to Futbase</h2>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            formControlName="username"
+            [ngClass]="{ error: isInvalid('username') }"
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            formControlName="password"
+            [ngClass]="{ error: isInvalid('password') }"
+          />
+        </div>
+        <div class="alert alert-danger" *ngIf="submitError" role="alert">
+          You must provide a username and password.<br /><br />
+          NOTE: Username must be a valid email and password must be between 8-15
+          characters with a letter and special character.
+        </div>
+        <button type="submit" class="btn btn-primary">Log in</button>
+      </form>
+    </div>
+  </div>
+</div>

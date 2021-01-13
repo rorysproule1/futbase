@@ -1,0 +1,233 @@
+<div class="container" style="margin-top: 100px">
+  <div class="row">
+    <div class="col-sm-12">
+      <form [formGroup]="playersForm" (ngSubmit)="onSubmit()">
+        <div class="row" style="margin-bottom: 20px">
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Overall:</h5>
+                <div class="form-group">
+                  <select
+                    id="overall"
+                    name="overall"
+                    class="form-control"
+                    formControlName="overall"
+                  >
+                    <option
+                      *ngFor="let number of number_list"
+                      value="{{ number }}"
+                    >
+                      {{ number }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Name:</h5>
+                <div class="form-group">
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="form-control"
+                    formControlName="name"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Position:</h5>
+                <div class="form-group">
+                  <select
+                    id="position"
+                    name="position"
+                    class="form-control"
+                    formControlName="position"
+                  >
+                    <option
+                      *ngFor="let position of position_list"
+                      value="{{ position }}"
+                    >
+                      {{ position }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3" style="margin-bottom: 20px">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Nationality:</h5>
+                <div class="form-group">
+                  <input
+                    type="text"
+                    id="nationality"
+                    name="nationality"
+                    class="form-control"
+                    formControlName="nationality"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">League:</h5>
+                <div class="form-group">
+                  <input
+                    type="text"
+                    id="league"
+                    name="league"
+                    class="form-control"
+                    formControlName="league"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Club:</h5>
+                <div class="form-group">
+                  <input
+                    type="text"
+                    id="club"
+                    name="club"
+                    class="form-control"
+                    formControlName="club"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Quality:</h5>
+                <div class="form-group">
+                  <select
+                    id="quality"
+                    name="quality"
+                    class="form-control"
+                    formControlName="quality"
+                  >
+                    <option
+                      *ngFor="let quality of quality_list"
+                      value="{{ quality }}"
+                    >
+                      {{ quality }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Revision:</h5>
+                <div class="form-group">
+                  <select
+                    id="revision"
+                    name="revision"
+                    class="form-control"
+                    formControlName="revision"
+                  >
+                    <option
+                      *ngFor="let revision of revision_list"
+                      value="{{ revision }}"
+                    >
+                      {{ revision }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          style="margin-bottom: 20px; float: right"
+        >
+          Search
+        </button>
+        <button
+          class="btn btn-outline-danger"
+          style="margin-right: 20px; float: right"
+          (click)="clear()"
+        >
+          Clear
+        </button>
+      </form>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Overall</th>
+            <th scope="col">Name</th>
+            <th scope="col">Position</th>
+            <th scope="col">Nationality</th>
+            <th scope="col">League</th>
+            <th scope="col">Club</th>
+            <th scope="col">Quality</th>
+            <th scope="col">Revision</th>
+          </tr>
+        </thead>
+        <tbody *ngFor="let player of webService.players_list | async">
+          <!-- Don't show player count used for pagination -->
+          <tr
+            *ngIf="player.player_count == 0"
+            [routerLink]="['/players', player.player_id]"
+            style="cursor: pointer"
+          >
+            <div class="alert alert-warning" role="alert">
+              Your search returned no players
+            </div>
+          </tr>
+          <tr
+            *ngIf="player.name"
+            [routerLink]="['/players', player.player_id]"
+            style="cursor: pointer"
+          >
+            <td>{{ player.overall }}</td>
+            <td>{{ player.name }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.nationality }}</td>
+            <td>{{ player.league }}</td>
+            <td>{{ player.club }}</td>
+            <td>{{ player.quality }}</td>
+            <td>{{ player.revision }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="row" style="margin-bottom: 20px">
+        <div class="col-sm-6" *ngIf="page !== 1">
+          <button class="btn btn-primary" (click)="previousPage()">
+            Previous Page - {{ page - 1 }}
+          </button>
+        </div>
+        <div class="col-sm-6 text-right">
+          <button class="btn btn-primary" (click)="nextPage()">
+            Next Page
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- col -->
+  </div>
+  <!-- row -->
+</div>
+<!-- container -->

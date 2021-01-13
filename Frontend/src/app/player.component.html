@@ -1,0 +1,234 @@
+<div class="container" style="margin-top: 100px">
+  <div *ngFor="let player of webService.player_list | async">
+    <div class="card-deck" style="margin-bottom: 20px">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Personal Details</h5>
+          <p class="card-text">
+            Name: {{ player.player_name }}<br />
+            Extended name: {{ player.player_extended_name }}<br />
+            Overall: {{ player.overall }}<br />
+            Card: {{ player.revision }}/{{ player.quality }}<br />
+            Nationality: {{ player.nationality }}<br />
+            League: {{ player.league }}<br />
+            Club: {{ player.club }}
+          </p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">In-Game Details</h5>
+          <p class="card-text">
+            Position: {{ player.position }}<br />
+            Height: {{ player.height }}cm<br />
+            Pref Foot: {{ player.pref_foot }}<br />
+            Weak Foot: {{ player.weak_foot }}/5<br />
+            Skill Moves: {{ player.skill_moves }}/5<br />
+            Work Rates: {{ player.att_workrate }}/{{
+              player.def_workrate
+            }}
+            (Att/Def)<br />
+            <button
+              class="btn btn-outline-success"
+              style="margin-top: 10px"
+              (click)="addToWishlist(player.base_id, player._id)"
+            >
+              Add to Wishlist
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="player.position == 'GK'" style="margin-bottom: 20px">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Goalkeeping</h5>
+          <p class="card-text">
+            Diving: {{ player.gk_diving }}<br />
+            Handling: {{ player.gk_handling }}<br />
+            Kicking: {{ player.gk_kicking }}<br />
+            Reflexes: {{ player.gk_reflexes }}<br />
+            Speed: {{ player.gk_speed }}<br />
+            Positioning: {{ player.gk_positoning }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="player.position != 'GK'">
+      <div class="card-deck" style="margin-bottom: 20px">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Pace - {{ player.pace }}</h5>
+            <p class="card-text">
+              Sprint speed: {{ player.pace_sprint_speed }}<br />
+              Acceleration: {{ player.pace_acceleration }}
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Shooting - {{ player.shooting }}</h5>
+            <p class="card-text">
+              Positioning: {{ player.shoot_positioning }}<br />
+              Finishing: {{ player.shoot_finishing }}<br />
+              Shot Power: {{ player.shoot_shot_power }}<br />
+              Long Shots: {{ player.shoot_long_shots }}<br />
+              Volleys: {{ player.shoot_volleys }}<br />
+              Penalties: {{ player.shoot_penalties }}
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Passing - {{ player.passing }}</h5>
+            <p class="card-text">
+              Vision: {{ player.pass_vision }}<br />
+              Crossing: {{ player.pass_crossing }}<br />
+              Free Kick: {{ player.pass_free_kick }}<br />
+              Short Pass: {{ player.pass_short }}<br />
+              Long Pass: {{ player.pass_long }}<br />
+              Curve: {{ player.pass_curve }}
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Dribbling - {{ player.dribbling }}</h5>
+            <p class="card-text">
+              Agility: {{ player.drib_agility }}<br />
+              Balance: {{ player.drib_balance }}<br />
+              Reactions: {{ player.drib_reactions }}<br />
+              Ball Control: {{ player.drib_ball_control }}<br />
+              Dribbling: {{ player.drib_dribbling }}<br />
+              Composure: {{ player.drib_composure }}
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Defending - {{ player.defending }}</h5>
+            <p class="card-text">
+              Interceptions: {{ player.def_interceptions }}<br />
+              Heading: {{ player.def_heading }}<br />
+              Marking: {{ player.def_marking }}<br />
+              Stand Tackle: {{ player.def_stand_tackle }}<br />
+              Slide Tackle: {{ player.def_slid_tackle }}
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Physical - {{ player.physicality }}</h5>
+            <p class="card-text">
+              Jumping: {{ player.phys_jumping }}<br />
+              Stamina: {{ player.phys_stamina }}<br />
+              Strength: {{ player.phys_strength }}<br />
+              Aggression: {{ player.phys_aggression }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <h4 style="margin-bottom: 20px">User Reviews</h4>
+
+      <p>
+        <button
+          class="btn btn-outline-primary btn-sm"
+          style="float: right; margin-right: 10px"
+          (click)="sortReviews('unpopular')"
+        >
+          Unpopular
+        </button>
+        <button
+          class="btn btn-outline-primary btn-sm"
+          style="float: right; margin-right: 10px"
+          (click)="sortReviews('popular')"
+        >
+          Popular
+        </button>
+        <button
+          class="btn btn-outline-primary btn-sm"
+          style="float: right; margin-right: 10px; margin-left: 30px"
+          (click)="sortReviews('recent')"
+        >
+          Recent
+        </button>
+      </p>
+
+      <div
+        class="col-sm-12"
+        *ngFor="let review of webService.reviews_list | async"
+      >
+        <div *ngIf="review.review_count !== 0 && review.user">
+          <div class="card bg-light mb-3">
+            <div class="card-header">Review by {{ review.user }}</div>
+            <div class="card-body">
+              {{ review.comment }}
+              <hr />
+              <p>
+                <strong>Upvotes:</strong> {{ review.upvotes }}
+                <button
+                  class="btn btn-success btn-sm"
+                  style="float: right; margin-right: 10px"
+                  (click)="upvote(review._id)"
+                >
+                  Upvote
+                </button>
+                <button
+                  class="btn btn-danger btn-sm"
+                  style="float: right; margin-right: 10px"
+                  (click)="downvote(review._id)"
+                >
+                  Downvote
+                </button>
+              </p>
+            </div>
+            <div class="card-footer">Date: {{ review.date }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="review.review_count === 0">
+          <div class="alert alert-warning" role="alert">
+            This player has no reviews
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div class="col-sm-12">
+    <div class="card text-white bg-dark mb-3">
+      <div class="card-header"><b>Leave a review</b></div>
+      <div class="card-body">
+        <div class="alert alert-danger" *ngIf="submitError" role="alert">
+          You must provide a review, that is less than 1000 words.
+        </div>
+        <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="review">Review (1000 words)</label>
+            <textarea
+              id="review"
+              rows="3"
+              name="review"
+              class="form-control"
+              formControlName="review"
+              [ngClass]="{ error: isInvalid('review') }"
+            >
+            </textarea>
+          </div>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
